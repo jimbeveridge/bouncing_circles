@@ -20,7 +20,7 @@ final circleColors = [
   0xffFDD749
 ].map((c) => new Color(c)).toList();
 
-/// Represents of a single circle that's expanding and contracting.
+/// Represents a single circle that's expanding and contracting.
 class Circle {
   static final rand = new Random();
   Point center;
