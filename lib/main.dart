@@ -117,9 +117,9 @@ class _BouncingCirclesState extends State<BouncingCircles> {
     }
   }
 
-  void _tapped(BuildContext context, Point position) {
-    Point local =
-        ((context.findRenderObject() as RenderBox).globalToLocal(position));
+  void _tapped(BuildContext context, TapDownDetails details) {
+    Point local = ((context.findRenderObject() as RenderBox)
+        .globalToLocal(details.globalPosition));
 
     setState(() {
       circles.add(new Circle()..center = local);
@@ -131,17 +131,19 @@ class _BouncingCirclesState extends State<BouncingCircles> {
   Widget build(BuildContext context) {
     return new Scaffold(
         appBar: new AppBar(title: new Text('Bouncing Circles')),
-        body: new Builder(builder: (context) => new GestureDetector(
-            onTapDown: (Point position) => _tapped(context, position),
-            child: new Container(
-                decoration:
-                    new BoxDecoration(backgroundColor: const Color(0xFF000000)),
-                child: new CustomPaint(
-                    foregroundPainter: new CirclePainter(circles))))),
+        body: new Builder(
+            builder: (context) => new GestureDetector(
+                onTapDown: (TapDownDetails details) =>
+                    _tapped(context, details),
+                child: new Container(
+                    decoration: new BoxDecoration(
+                        backgroundColor: const Color(0xFF000000)),
+                    child: new CustomPaint(
+                        foregroundPainter: new CirclePainter(circles))))),
         floatingActionButton: new FloatingActionButton(
             onPressed: _clearCircles,
             tooltip: 'Clear',
-            child: new Icon(icon: Icons.clear)));
+            child: new Icon(Icons.clear)));
   }
 }
 
