@@ -23,7 +23,7 @@ final circleColors = [
 /// Represents a single circle that's expanding and contracting.
 class Circle {
   static final rand = new Random();
-  Point center;
+  Offset center;
   Color color = circleColors[rand.nextInt(circleColors.length)];
   double radius = 1.0;
   double velocity = 0.9;
@@ -37,8 +37,8 @@ class Circle {
 
   void flipIntersectingCircles(Circle c2) {
     Circle c1 = this;
-    final squared = (pow(c1.center.x - c2.center.x, 2.0) +
-        pow(c1.center.y - c2.center.y, 2.0));
+    final squared = (pow(c1.center.dx - c2.center.dx, 2.0) +
+        pow(c1.center.dy - c2.center.dy, 2.0));
     final distance = sqrt(squared);
     if (distance < (c1.radius + c2.radius)) {
       // Edge case: ignore two concentric circles not yet touching.
@@ -49,7 +49,7 @@ class Circle {
     }
   }
 
-  /// Reverse the circles growth if it intersects with the edges of the
+  /// Reverse the circle's growth if it intersects with the edges of the
   /// rendering area.
   ///
   /// kExpandBorders can be set to allow the rendering area to be larger than
@@ -58,10 +58,10 @@ class Circle {
   /// so we can't do this test at the same time as [flipIntersectingCircles].
   void flipIfIntersectsView(Size size) {
     if (velocity > 0.0) {
-      if (center.x - radius < -kExpandBorders ||
-          center.y - radius < -kExpandBorders ||
-          center.x + radius > size.width + kExpandBorders ||
-          center.y + radius > size.height + kExpandBorders) {
+      if (center.dx - radius < -kExpandBorders ||
+          center.dy - radius < -kExpandBorders ||
+          center.dx + radius > size.width + kExpandBorders ||
+          center.dy + radius > size.height + kExpandBorders) {
         flip = true;
       }
     }
@@ -85,14 +85,20 @@ class BouncingCircles extends StatefulWidget {
   _BouncingCirclesState createState() => new _BouncingCirclesState();
 }
 
-class _BouncingCirclesState extends State<BouncingCircles> {
+class _BouncingCirclesState extends State<BouncingCircles>
+    with SingleTickerProviderStateMixin {
   final circles = <Circle>[];
-  final controller = new AnimationController()
-    ..repeat(period: const Duration(seconds: 60));
+  AnimationController controller;
 
-  _BouncingCirclesState() {
-    controller.addListener(() => setState(markCirclesToFlip));
-    circles.add(new Circle()..center = new Point(100.0, 100.0));
+  _BouncingCirclesState() {}
+
+  @override
+  void initState() {
+    super.initState();
+    controller = new AnimationController(vsync: this)
+      ..repeat(period: const Duration(seconds: 60))
+      ..addListener(() => setState(markCirclesToFlip));
+    circles.add(new Circle()..center = new Offset(100.0, 100.0));
   }
 
   @override
@@ -118,7 +124,7 @@ class _BouncingCirclesState extends State<BouncingCircles> {
   }
 
   void _tapped(BuildContext context, TapDownDetails details) {
-    Point local = ((context.findRenderObject() as RenderBox)
+    Offset local = ((context.findRenderObject() as RenderBox)
         .globalToLocal(details.globalPosition));
 
     setState(() {
@@ -136,9 +142,11 @@ class _BouncingCirclesState extends State<BouncingCircles> {
                 onTapDown: (TapDownDetails details) =>
                     _tapped(context, details),
                 child: new Container(
-                    decoration: new BoxDecoration(
-                        backgroundColor: const Color(0xFF000000)),
+                    decoration:
+                        new BoxDecoration(color: const Color(0xFF000000)),
                     child: new CustomPaint(
+                        willChange: true,
+                        child: new Container(),
                         foregroundPainter: new CirclePainter(circles))))),
         floatingActionButton: new FloatingActionButton(
             onPressed: _clearCircles,
