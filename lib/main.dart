@@ -1,10 +1,5 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 import 'dart:math' hide Point;
 
-import 'package:flutter/animation.dart';
 import 'package:flutter/material.dart';
 
 /// Allow circles to grow this much beyond the edges of the screen.
@@ -18,12 +13,12 @@ final circleColors = [
   0xffFD8F38,
   0xff8E4DBB,
   0xffFDD749
-].map((c) => new Color(c)).toList();
+].map((c) => Color(c)).toList();
 
 /// Represents a single circle that's expanding and contracting.
 class Circle {
-  static final rand = new Random();
-  Offset center;
+  static final rand = Random();
+  Offset center = const Offset(0.0, 0.0);
   Color color = circleColors[rand.nextInt(circleColors.length)];
   double radius = 1.0;
   double velocity = 0.9;
@@ -81,24 +76,26 @@ class Circle {
 }
 
 class BouncingCircles extends StatefulWidget {
+  const BouncingCircles({super.key});
+
   @override
-  _BouncingCirclesState createState() => new _BouncingCirclesState();
+  State<BouncingCircles> createState() => _BouncingCirclesState();
 }
 
 class _BouncingCirclesState extends State<BouncingCircles>
     with SingleTickerProviderStateMixin {
   final circles = <Circle>[];
-  AnimationController controller;
+  late AnimationController controller;
 
-  _BouncingCirclesState() {}
+  _BouncingCirclesState();
 
   @override
   void initState() {
     super.initState();
-    controller = new AnimationController(vsync: this)
+    controller = AnimationController(vsync: this)
       ..repeat(period: const Duration(seconds: 60))
       ..addListener(() => setState(markCirclesToFlip));
-    circles.add(new Circle()..center = new Offset(100.0, 100.0));
+    circles.add(Circle()..center = const Offset(100.0, 100.0));
   }
 
   @override
@@ -128,30 +125,36 @@ class _BouncingCirclesState extends State<BouncingCircles>
         .globalToLocal(details.globalPosition));
 
     setState(() {
-      circles.add(new Circle()..center = local);
+      circles.add(Circle()..center = local);
       if (circles.length > 50) circles.removeAt(0);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-        appBar: new AppBar(title: new Text('Bouncing Circles')),
-        body: new Builder(
-            builder: (context) => new GestureDetector(
+    bool isWindows = Theme.of(context).platform == TargetPlatform.windows;
+
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('Bouncing Circles'),
+          // On Windows the title bar already shows the app name. DRY.
+          toolbarHeight: isWindows ? 0 : null,
+        ),
+        body: Builder(
+            builder: (context) => GestureDetector(
                 onTapDown: (TapDownDetails details) =>
                     _tapped(context, details),
-                child: new Container(
-                    decoration:
-                        new BoxDecoration(color: const Color(0xFF000000)),
-                    child: new CustomPaint(
-                        willChange: true,
-                        child: new Container(),
-                        foregroundPainter: new CirclePainter(circles))))),
-        floatingActionButton: new FloatingActionButton(
+                child: Container(
+                    decoration: const BoxDecoration(color: Color(0xFF000000)),
+                    child: CustomPaint(
+                      willChange: true,
+                      foregroundPainter: CirclePainter(circles),
+                      child: Container(),
+                    )))),
+        floatingActionButton: FloatingActionButton(
             onPressed: _clearCircles,
             tooltip: 'Clear',
-            child: new Icon(Icons.clear)));
+            child: const Icon(Icons.clear)));
   }
 }
 
@@ -167,7 +170,7 @@ class CirclePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = new Paint()
+    Paint paint = Paint()
       ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke;
 
@@ -183,10 +186,22 @@ class CirclePainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
 
-void main() {
-  runApp(new MaterialApp(
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
       title: 'Bouncing Circles',
-      routes: <String, WidgetBuilder>{
-        '/': (BuildContext context) => new BouncingCircles()
-      }));
+      theme: ThemeData(
+        useMaterial3: false,
+      ),
+      home: const BouncingCircles(),
+    );
+  }
+}
+
+void main() {
+  runApp(const MyApp());
 }
